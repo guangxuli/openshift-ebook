@@ -14,6 +14,7 @@
 在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。
 同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
 ![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
+
 ###[sources](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#how-build-inputs-work)
  - Inline Dockerfile definitions
  - Content extracted from existing images
