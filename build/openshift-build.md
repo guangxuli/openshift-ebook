@@ -2,7 +2,7 @@
 
 [TOC]
 
-## sti
+## [sti requirements](https://docs.openshift.org/latest/creating_images/s2i.html)
 主要的作用还是生成Docker Image
 两个基本概念
 ### Build Process
@@ -22,6 +22,48 @@
  - Binary inputs
  - Input secrets
  - External artifacts
+ | build input | build strategy |
+ | ----- | ----- |
+ | DockerFile | Docker、Custom  |
+ |  |  |
+ 
+### example
+
+#### DockerFile 
+如果BuildConfig.spec.source.type的类型是Dockerfile，那么input就只能是inline DockerFile。
+
+    source:
+      type: "Dockerfile"
+      dockerfile: "FROM centos:7\nRUN yum install -y httpd"
+#### Image Source
+主要是把构建过程中需要的额外的文件打包到image中，在引用的时候可以通过引用image的方式，从而来获取（拷贝）build过程所有需要的文件。引用image的方式可以是直接应用docker image，也可以引用image stream。注意拷贝image中文件时，一定要定义好两个路径信息，一个destinationDir，另一个是sourcePath。
+destinationDir必须是相对路径，相对于构建进程的路径。而sourcePath必须是绝对路径，也就是保存构建文件image内的绝对路径。举个例子：
+
+    source:
+      git:
+        uri: https://github.com/openshift/ruby-hello-world.git
+      images: 
+      - from: 
+          kind: ImageStreamTag
+          name: myinputimage:latest
+          namespace: mynamespace
+        paths: 
+        - destinationDir: injected/dir 
+          sourcePath: /usr/lib/somefile.jar 
+      - from:
+          kind: ImageStreamTag
+          name: myotherinputimage:latest
+          namespace: myothernamespace
+        pullSecret: mysecret 
+        paths:
+        - destinationDir: injected/dir
+          sourcePath: /usr/lib/somefile.jar
+    An array of one or more input images and files.
+    A reference to the image containing the files to be copied.
+    An array of source/destination paths.
+    The directory relative to the build root where the build process can access the file.
+    The location of the file to be copied out of the referenced image.
+    An optional secret provided if credentials are needed to access the input image.
 
 ###S2I scripts
   开发者可以使用任何语言来编写自己的S2I scripts，只要这个语言在构建容器中能够被有效的执行。S2I支持多种的选项来确认assemble/run/save-artifacts scripts各功能脚本的存放位置。每次构建前s2i都会按照如下的顺序检查下面的配置路径，来确定脚本的存放位置。
@@ -110,15 +152,19 @@ example 4. usage script:
 
 ## custom
 
+## [Testing S2I Images](https://docs.openshift.org/latest/creating_images/s2i_testing.html#creating-images-s2i-testing)
 
-----------
+### Overview
+
+### Testing Requirements
+
+### Generating Scripts and Tools
+
+### Testing Locally
+
+### Basic Testing Workflow
+
+### Using OpenShift Origin Build for Automated Testing
 
 
-----------
-
-
-----------
-
-
-----------
-
+##实践
