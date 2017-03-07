@@ -15,14 +15,15 @@
 同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
 ![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
 
-###[sources](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#how-build-inputs-work)
- - Inline Dockerfile definitions
- - Content extracted from existing images
- - Git repositories
- - Binary inputs
- - Input secrets
- - External artifacts
- | build input | build strategy |
+###[Build inputs including source ](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#how-build-inputs-work)
+ - [source] Inline Dockerfile definitions  
+ - [source] Content extracted from existing images  
+ - [source] Git repositories  
+ - [source] Binary inputs  
+ - [build inputs] Input secrets 
+ - [build inputs] External artifacts 
+ 
+ | build inputs | build strategy |
  | ----- | ----- |
  | DockerFile | Docker、Custom  |
  |  |  |
@@ -42,28 +43,168 @@ destinationDir必须是相对路径，相对于构建进程的路径。而source
     source:
       git:
         uri: https://github.com/openshift/ruby-hello-world.git
-      images: 
-      - from: 
+      images: (1)
+      - from: (2)
           kind: ImageStreamTag
           name: myinputimage:latest
           namespace: mynamespace
-        paths: 
-        - destinationDir: injected/dir 
-          sourcePath: /usr/lib/somefile.jar 
+        paths: (3)
+        - destinationDir: injected/dir (4)
+          sourcePath: /usr/lib/somefile.jar (5)
       - from:
           kind: ImageStreamTag
           name: myotherinputimage:latest
           namespace: myothernamespace
-        pullSecret: mysecret 
+        pullSecret: mysecret (6)
         paths:
         - destinationDir: injected/dir
           sourcePath: /usr/lib/somefile.jar
-    An array of one or more input images and files.
-    A reference to the image containing the files to be copied.
-    An array of source/destination paths.
-    The directory relative to the build root where the build process can access the file.
-    The location of the file to be copied out of the referenced image.
-    An optional secret provided if credentials are needed to access the input image.
+参数项说明：
+(1) 保存镜像或者文件的数组列表
+(2) 保存构建文件（将会被拷贝）的镜像信息
+(3) 一组成对（destinationDir/sourcePath）的路径信息列表, 简单理解为从哪里拷贝文件并拷贝到哪里去
+(4) 目的目录-相对目录.
+(5) 源路径-绝对路径，在image中拷贝文件的路径
+(6)secret信息（可选），如果在pull image时需要
+    
+
+> 需要注意的是，在用户定制构建中（custom build）不支持这一特性，也就是不支持把构建文件存放的另一个image中。
+#### **Git Source**
+Prerequisite：BuildConfig.spec.source.type = Git
+如果build 源类型是git，那么必须提供一个git代码仓库路径。而inline Dockerfile可选的。如果配置的dockerfile一项，那么在ContextDir包含的dockerfile（如果存在）将会被替换。也就是buildconfig配置优先。
+
+    source:
+      type: "Git"
+      git: (1)
+        uri: "https://github.com/openshift/ruby-hello-world"
+        ref: "master"
+      contextDir: "app/dir" (2)
+      dockerfile: "FROM openshift/ruby-22-centos7\nUSER example" (3)
+(1) git仓库的路径信息，ref为具体的分支信息，格式可以为SHA1或者分支名称
+(2) 主要是应用所在的代码目录是给出git url中的一个子目录，即应用代码真正存在与对应的子目录下，而非默认的根目录。如果指定该字段，那么默认的根目录路径将被替换。
+(3) 如果在source类型给git的配置中，包含了dockerfile项，那么在应用目录下的存在的已有的dockerfile文件内容将会被覆盖。
+
+> 如果build config中不指定ref信息，那么openshift 默认clone
+> 主分支的HEAD代码，就是clone深度为1（--depth=1），这个深度不是目录深度，而是版本管理深度。为1表示只clone最后一个版本，其他版本信息不保存。就是没有了版本控制。
+
+##### proxy
+
+    source:
+      type: Git
+      git:
+        uri: "https://github.com/openshift/ruby-hello-world"
+        httpProxy: http://proxy.example.com
+        httpsProxy: https://proxy.example.com
+        noProxy: somedomain.com, otherdomain.com
+###### [Source Clone Secrets](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
+
+> 与secret相关的内容，后续会输出一个单独文档进行讲解
+
+#### **Binary Source**
+
+> BuildConfig.spec.source.type = Binary binary类型的source比较特别，因为它只能通过使用oc start-build命令来进行使用。这种方式的源是不能够通过进行触发同时也不能通过web console的方式进行构建。 使用的参数：
+--from-file：
+--from-dir and --from-repo：
+--from-archive：
+> 如果BuildConfig中配置了Binary source，而在oc
+> start-build命令同时也制定了binary，那么buildconfig中的Binary会被替代。
+> 如果BuildConfig配置了Git source，而在oc
+> start-build命令同时也指定了binary，客户端的binary会被处理。注意：Git source 与Binary source
+> 互斥。
+参数比较多，下面主要通过来进行理解：
+
+#### **Input Secrets**
+使用的场景主要是需要用户的认证信息，但是由于安全原因又不想暴露该信息。这时我们就需要输出secret，当然首先应该创建。Secret的详细解释可以参考[k8s](https://kubernetes.io/docs/user-guide/secrets/)，[openshift](https://docs.openshift.org/latest/dev_guide/secrets.html)也给出很详细的解释。
+这里举两个例子简单说明一下
+
+   
+
+    $ oc secrets new secret-npmrc .npmrc=~/.npmrc (例1)
+    $ oc secrets new my-secret .dockerconfigjson=.docker/config.json (例2)
+    $ oc export  secret my-secret
+    apiVersion: v1
+    data:
+      .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJodHRwczovL2luZGV4LmRvY2tlci5pby92MS8iOiB7CgkJCSJhdXRoIjogImFHRnBZbWxoYm5ocFlXOWtiMjVuWW1WcE9tUnZZMnRsY2tGaE9EZzRPRGc0IgoJCX0KCX0KfQ==
+    kind: Secret
+    metadata:
+      creationTimestamp: null
+      name: my-secret
+    type: kubernetes.io/dockerconfigjson
+           
+容器启动时，根据secret的配置，把系统（etcd）中保存的secret信息，保存的容器的数据卷中，文件名称通常与原始挂在认证配置文件相同。但是需要注意的是最新的docker配置文件: .docker/config.json, 而该配置文件通过secret保存后，重新映射到容器内的数据卷后，名字为.dockerconfigjson。应为我们的数据保存层secret时，是不支持多级目录作为key的。
+
+我们下面以例子1中创建的secret secret-npmrc 进行build过程中如何使用secret
+
+BuildConfig中配置(更新已存在的BuildConfig)
+   
+    source:
+      git:
+        uri: https://github.com/openshift/nodejs-ex.git
+      secrets:
+        - secret:
+            name: secret-npmrc
+      type: Git
+
+命令行配置(创建新的BuildConfig)
+
+    $ oc new-build \
+        openshift/nodejs-010-centos7~https://github.com/openshift/nodejs-ex.git \
+        --build-secret secret-npmrc
+secret在image中的保存位置，通常就在工作目录下，也就是代码的路径下（sti stragety），当然这个路径是可以设置的。在DockerFile中使用WORKDIR，在BuildConfig中可以指定destinationDir。例如：
+
+    source:
+      git:
+        uri: https://github.com/openshift/nodejs-ex.git
+      secrets:
+        - secret:
+            name: secret-npmrc
+          destinationDir: /etc
+      type: Git
+
+> 注意1：如果构建的策略是Docker strategy，那么destinationDir的值必须是相对目录。
+> 注意2：如果构建的策略是sti，目的目录如果设置，那么必须存在，因为在整个build过程中，不会创建任何新的目录。
+> 注意3：如果构建的策略是sti，目前所有的secret的权限被设置成0666，就是说可以任意的读写，写的原因主要是在执行完assemble脚后，进行文件清空。对于清空的原因主要还是安全的考虑，因为assemble之后，主要就是编译运行阶段，这时的image内最初需要使用的secret，现在已经不需要了。
+
+[DockerStragety？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-docker-strategy)
+[Custom Strategy ？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-custom-strategy)
+#### **Using External Artifacts**
+主要是在构建过程中，需要依赖额外的报，比如jar文件。对于不同的构建策略来说，具体的使用方式是不同的。
+对于sti stragety，我们需要再assemble脚本中，加入下载依赖的包的shell命令，比如：wget  *.jar -o app_dep.jar，在运行应用的时候可能也需要更改run脚本，来运行该依赖。
+对于docker stragety，我们需要修改dockerfile，同时加入RUN命令来下载相关的依赖，比如：RUN wget *.jar -O app_dep.jar
+
+> 对于这几种构建策略，依赖的保存位置，可以通过设置环境变量的方式来更改。
+
+- Using the .s2i/environment file (仅sti 策略有效)
+- Setting in BuildConfig（all）
+- Providing explicitly using oc start-build --env (仅手动构建有效)
+
+#### **Using Docker Credential for Private Registries**
+主要就是secret的理解，对于secret后面单独介绍
+主要了解，如果创建secret，如果把secret赋予个service account。
+如openshift中：
+$ oc secrets new dockerhub ~/.docker/config.json
+$ oc secrets link builder dockerhub
+$ oc set build-secret --push bc/sample-build dockerhub
+或者直接是修改BC
+PUSH:
+
+    spec:
+      output:
+        to:
+          kind: "DockerImage"
+          name: "private.registry.com/org/private-image:latest"
+        pushSecret:
+          name: "dockerhub"
+PULL:
+
+    strategy:
+      sourceStrategy:
+        from:
+          kind: "DockerImage"
+          name: "docker.io/user/private_repository"
+        pullSecret:
+          name: "dockerhub"
+      type: "Source"
 
 ###S2I scripts
   开发者可以使用任何语言来编写自己的S2I scripts，只要这个语言在构建容器中能够被有效的执行。S2I支持多种的选项来确认assemble/run/save-artifacts scripts各功能脚本的存放位置。每次构建前s2i都会按照如下的顺序检查下面的配置路径，来确定脚本的存放位置。
