@@ -365,7 +365,19 @@ example 4. usage script:
 ### sti 工具
 
 sti build
+查看编译镜像：
 
+    [cloud@centos openshift]$ docker run -ti centos/ruby-22-centos7 /bin/bash
+    bash-4.2$ pwd   
+    /opt/app-root/src
+    bash-4.2$ ls -la
+    total 0
+    drwxrwxr-x. 3 default root 18 Feb 16 13:08 .
+    drwxrwxr-x. 4 default root 42 Feb 21 09:57 ..
+    drwxrwxr-x. 3 default root 19 Feb 16 13:08 .pki
+远端代码仓库文件：
+![enter image description here](https://github.com/guangxuli/openshift-ebook/blob/master/build/ruby-ex.jpg)
+开始构建：
     [cloud@centos openshift]$ s2i build https://github.com/openshift/ruby-hello-world centos/ruby-22-centos7 hello-world-app:1.0
     ---> Installing application source ...
     ---> Building your Ruby application from source ...
@@ -394,10 +406,11 @@ sti build
     It was installed into ./bundle
     ---> Cleaning up unused ruby gems ...
 
-查看输出image：
+查看应用镜像输出结果：
 
     [cloud@centos openshift]$ docker images | grep hello
     hello-world-app    1.0      956c161ead31        About a minute ago   456.8 MB
+查看应用镜像内部文件：
 
  -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images
  -n, --application-name string          Specify the display name for the application (default: output image name)
