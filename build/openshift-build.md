@@ -29,8 +29,9 @@
  - [source] Binary inputs  
  - [build inputs] Input secrets 
  - [build inputs] External artifacts 
- 
- | build inputs | build strategy |
+
+不同的策略与构建源对应的关系
+ | 构建源 | 构建策略 |
  | ----- | ----- |
  | DockerFile | Docker、Custom  |
  |  |  |
@@ -219,7 +220,7 @@ PULL:
 - custom
 - pipeline
 
-### STI 
+### STI build
 
 首先STI是一个工具，该工具能够还是生成Docker Image
 STI的主要优势：
@@ -359,4 +360,84 @@ example 4. usage script:
 
 ## 调试
 
-##实践
+## 实践
+
+### sti 工具
+
+sti build
+
+    [cloud@centos openshift]$ s2i build https://github.com/openshift/ruby-hello-world centos/ruby-22-centos7 hello-world-app:1.0
+    ---> Installing application source ...
+    ---> Building your Ruby application from source ...
+    ---> Running 'bundle install --deployment --without development:test' ...
+    Fetching gem metadata from https://rubygems.org/..........
+    Installing rake 10.3.2
+    Installing i18n 0.6.11
+    Installing json 1.8.6
+    Installing minitest 5.4.2
+    Installing thread_safe 0.3.4
+    Installing tzinfo 1.2.2
+    Installing activesupport 4.1.7
+    Installing builder 3.2.2
+    Installing activemodel 4.1.7
+    Installing arel 5.0.1.20140414130214
+    Installing activerecord 4.1.7
+    Installing mysql2 0.3.16
+    Installing rack 1.5.2
+    Installing rack-protection 1.5.3
+    Installing tilt 1.4.1
+    Installing sinatra 1.4.5
+    Installing sinatra-activerecord 2.0.3
+    Using bundler 1.7.8
+    Your bundle is complete!
+    Gems in the groups development and test were not installed.
+    It was installed into ./bundle
+    ---> Cleaning up unused ruby gems ...
+
+查看输出image：
+
+    [cloud@centos openshift]$ docker images | grep hello
+    hello-world-app    1.0      956c161ead31        About a minute ago   456.8 MB
+
+ -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images
+ -n, --application-name string          Specify the display name for the application (default: output image name)
+      --assemble-user string             Specify the user to run assemble with
+      --callback-url string              Specify a URL to invoke via HTTP POST upon build completion
+      --cap-drop stringSlice             Specify a comma-separated list of capabilities to drop when running Docker containers
+      --context-dir string               Specify the sub-directory inside the repository with the application sources
+  -c, --copy                             Use local file system copy instead of git cloning the source url
+      --description string               Specify the description of the application
+  -d, --destination string               Specify a destination location for untar operation
+      --dockercfg-path string            Specify the path to the Docker configuration file (default "/home/cloud/.docker/config.json")
+  -e, --env string                       Specify an single environment variable in NAME=VALUE format
+  -E, --environment-file string          Specify the path to the file with environment
+      --exclude string                   Regular expression for selecting files from the source tree to exclude from the build, where the default excludes the '.git' directory (see https://golang.org/pkg/regexp for syntax, but note that "" will be interpreted as allow all files and exclude no files) (default "(^|/)\.git(/|$)")
+      --force-pull                       DEPRECATED: Always pull the builder image even if it is present locally
+      --ignore-submodules                Ignore all git submodules when cloning application repository
+      --incremental                      Perform an incremental build
+      --incremental-pull-policy string   Specify when to pull the previous image for incremental builds (always, never or if-not-present) (default "if-not-present")
+  -i, --inject string                    Specify a directory to inject into the assemble container
+  -l, --location string                  DEPRECATED: Specify a destination location for untar operation
+  -p, --pull-policy string               Specify when to pull the builder image (always, never or if-not-present) (default "if-not-present")
+  -q, --quiet                            Operate quietly. Suppress all non-error output.
+  -r, --ref string                       Specify a ref to check-out
+      --rm                               Remove the previous image during incremental builds
+      --run                              Run resulting image as part of invocation of this command
+  -a, --runtime-artifact string          Specify a file or directory to be copied from the builder to the runtime image
+      --runtime-image string             Image that will be used as the base for the runtime image
+      --save-temp-dir                    Save the temporary directory used by S2I instead of deleting it
+      --scripts string                   DEPRECATED: Specify a URL for the assemble and run scripts
+  -s, --scripts-url string               Specify a URL for the assemble, assemble-runtime and run scripts
+      --use-config                       Store command line options to .s2ifile
+  -v, --volume string                    Specify a volume to mount into the assemble container
+
+Global Flags:
+      --ca string        Set the path of the docker TLS ca file (default "/home/cloud/.docker/ca.pem")
+      --cert string      Set the path of the docker TLS certificate file (default "/home/cloud/.docker/cert.pem")
+      --key string       Set the path of the docker TLS key file (default "/home/cloud/.docker/key.pem")
+      --loglevel int32   Set the level of log output (0-5)
+      --tls              Use TLS to connect to docker; implied by --tlsverify
+      --tlsverify        Use TLS to connect to docker and verify the remote
+  -U, --url string       Set the url of the docker socket to use (default "unix:///var/run/docker.sock")
+
+### oc 客户端
