@@ -376,8 +376,11 @@ sti build
     drwxrwxr-x. 4 default root 42 Feb 21 09:57 ..
     drwxrwxr-x. 3 default root 19 Feb 16 13:08 .pki
 远端代码仓库文件：
+
 ![enter image description here](https://github.com/guangxuli/openshift-ebook/blob/master/build/ruby-ex.jpg)
+
 开始构建：
+
     [cloud@centos openshift]$ s2i build https://github.com/openshift/ruby-hello-world centos/ruby-22-centos7 hello-world-app:1.0
     ---> Installing application source ...
     ---> Building your Ruby application from source ...
