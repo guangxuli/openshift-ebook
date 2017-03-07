@@ -2,20 +2,34 @@
 
 [TOC]
 
-## [sti requirements](https://docs.openshift.org/latest/creating_images/s2i.html)
-主要的作用还是生成Docker Image
-两个基本概念
-### Build Process
-构建的三个过程主要有三个元素组成，分别为
+## Build基本介绍
 
- - sources
- - S2I script
- -  builder image
-在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。
-同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
-![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
+- 什么是Build
+- 什么是BuildConfig
 
-###[Build inputs including source ](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#how-build-inputs-work)
+## Build的基本操作
+
+- 运行一个Build
+- 取消一个Build
+- 删除一个BuildConfig
+- 查看构建细节
+- 查看构建日志
+
+## Build的构建策略
+
+- sti
+- docker
+- custom
+- pipeline
+
+## Build运行的规则
+
+- serial
+- serial latest
+- parallel
+
+## Build 相关输入项
+
  - [source] Inline Dockerfile definitions  
  - [source] Content extracted from existing images  
  - [source] Git repositories  
@@ -28,15 +42,14 @@
  | DockerFile | Docker、Custom  |
  |  |  |
  
-### example
 
-#### DockerFile 
+### DockerFile 
 如果BuildConfig.spec.source.type的类型是Dockerfile，那么input就只能是inline DockerFile。
 
     source:
       type: "Dockerfile"
       dockerfile: "FROM centos:7\nRUN yum install -y httpd"
-#### Image Source
+### Image Source
 主要是把构建过程中需要的额外的文件打包到image中，在引用的时候可以通过引用image的方式，从而来获取（拷贝）build过程所有需要的文件。引用image的方式可以是直接应用docker image，也可以引用image stream。注意拷贝image中文件时，一定要定义好两个路径信息，一个destinationDir，另一个是sourcePath。
 destinationDir必须是相对路径，相对于构建进程的路径。而sourcePath必须是绝对路径，也就是保存构建文件image内的绝对路径。举个例子：
 
@@ -69,7 +82,7 @@ destinationDir必须是相对路径，相对于构建进程的路径。而source
     
 
 > 需要注意的是，在用户定制构建中（custom build）不支持这一特性，也就是不支持把构建文件存放的另一个image中。
-#### **Git Source**
+### **Git Source**
 Prerequisite：BuildConfig.spec.source.type = Git
 如果build 源类型是git，那么必须提供一个git代码仓库路径。而inline Dockerfile可选的。如果配置的dockerfile一项，那么在ContextDir包含的dockerfile（如果存在）将会被替换。也就是buildconfig配置优先。
 
@@ -87,7 +100,7 @@ Prerequisite：BuildConfig.spec.source.type = Git
 > 如果build config中不指定ref信息，那么openshift 默认clone
 > 主分支的HEAD代码，就是clone深度为1（--depth=1），这个深度不是目录深度，而是版本管理深度。为1表示只clone最后一个版本，其他版本信息不保存。就是没有了版本控制。
 
-##### proxy
+#### proxy
 
     source:
       type: Git
@@ -96,11 +109,11 @@ Prerequisite：BuildConfig.spec.source.type = Git
         httpProxy: http://proxy.example.com
         httpsProxy: https://proxy.example.com
         noProxy: somedomain.com, otherdomain.com
-###### [Source Clone Secrets](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
+#### [Source Clone Secrets](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
 
 > 与secret相关的内容，在Binary Source会有基本介绍，后续会输出一个单独文档进行讲解
 
-#### **Binary Source**
+### **Binary Source**
 
 > BuildConfig.spec.source.type = Binary binary类型的source比较特别，因为它只能通过使用oc start-build命令来进行使用。这种方式的源是不能够通过进行触发同时也不能通过web console的方式进行构建。 使用的参数：
 --from-file：
@@ -113,7 +126,7 @@ Prerequisite：BuildConfig.spec.source.type = Git
 > 互斥。
 参数比较多，下面主要通过来进行理解：
 
-#### **Input Secrets**
+### **Input Secrets**
 使用的场景主要是需要用户的认证信息，但是由于安全原因又不想暴露该信息。这时我们就需要输出secret，当然首先应该创建。Secret的详细解释可以参考[k8s](https://kubernetes.io/docs/user-guide/secrets/)，[openshift](https://docs.openshift.org/latest/dev_guide/secrets.html)也给出很详细的解释。
 这里举两个例子简单说明一下
 
@@ -167,7 +180,7 @@ secret在image中的保存位置，通常就在工作目录下，也就是代码
 
 [DockerStragety？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-docker-strategy)
 [Custom Strategy ？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-custom-strategy)
-#### **Using External Artifacts**
+### **Using External Artifacts**
 主要是在构建过程中，需要依赖额外的报，比如jar文件。对于不同的构建策略来说，具体的使用方式是不同的。
 对于sti stragety，我们需要再assemble脚本中，加入下载依赖的包的shell命令，比如：wget  *.jar -o app_dep.jar，在运行应用的时候可能也需要更改run脚本，来运行该依赖。
 对于docker stragety，我们需要修改dockerfile，同时加入RUN命令来下载相关的依赖，比如：RUN wget *.jar -O app_dep.jar
@@ -178,7 +191,7 @@ secret在image中的保存位置，通常就在工作目录下，也就是代码
 - Setting in BuildConfig（all）
 - Providing explicitly using oc start-build --env (仅手动构建有效)
 
-#### **Using Docker Credential for Private Registries**
+### **Using Docker Credential for Private Registries**
 主要就是secret的理解，对于secret后面单独介绍
 主要了解，如果创建secret，如果把secret赋予个service account。
 如openshift中：
@@ -205,6 +218,21 @@ PULL:
         pullSecret:
           name: "dockerhub"
       type: "Source"
+
+## [sti requirements](https://docs.openshift.org/latest/creating_images/s2i.html)
+
+主要的作用还是生成Docker Image
+两个基本概念
+### Build Process
+构建的三个过程主要有三个元素组成，分别为
+
+ - sources
+ - S2I script
+ -  builder image
+在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。
+同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
+![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
+
 
 ###S2I scripts
   开发者可以使用任何语言来编写自己的S2I scripts，只要这个语言在构建容器中能够被有效的执行。S2I支持多种的选项来确认assemble/run/save-artifacts scripts各功能脚本的存放位置。每次构建前s2i都会按照如下的顺序检查下面的配置路径，来确定脚本的存放位置。
@@ -307,5 +335,6 @@ example 4. usage script:
 
 ### Using OpenShift Origin Build for Automated Testing
 
+## 调试
 
 ##实践
