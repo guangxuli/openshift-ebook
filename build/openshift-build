@@ -221,7 +221,20 @@ PULL:
 
 ### STI 
 
-主要的作用还是生成Docker Image
+首先STI是一个工具，该工具能够还是生成Docker Image
+STI的主要优势：
+
+| 优势 | 描述 |
+| --- | --- | 
+|镜像灵活性||
+|加速制作镜像| 1.与docker build的方式相比，不需要每个step都创建一层，2.支持增量编译|
+|打补丁||
+|操作效率||
+|操作安全||
+|用户效率||
+|生态||
+|可再生||
+
 两个基本概念
 #### Build Process
 构建的三个过程主要有三个元素组成，分别为
@@ -312,14 +325,21 @@ example 4. usage script:
 
  1. builder image中安装了/bin/bash 已经tar工具
  2. builder image中不能包含ONBUILD指令
+ 
+### Docker Build
+需要一个仓库地址（url）并带有一份dockerfile文件。dockerfile应该包含了所有生成可运行docker image的构件
 
-### pipeline 
+### Custom Build
+
+### Pipeline Build
+主要完成更先进的工作流，主要完成CI/CD的过程，配置过程有两种方式：
+
+- 在BuildConfig中植入jenkins file
+- 提供一个包含jenkins file的git 库地址
 
 
-### docker file
 
 
-### custom
 
 ## [Testing S2I Images](https://docs.openshift.org/latest/creating_images/s2i_testing.html#creating-images-s2i-testing)
 
