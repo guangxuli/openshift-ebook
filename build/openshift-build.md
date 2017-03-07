@@ -24,9 +24,9 @@
 
 ## Build运行的规则
 
-- serial
-- serial latest
-- parallel
+- 串行
+- 串行最新
+- 并行
 
 ## Build 相关输入项
 
@@ -43,13 +43,13 @@
  |  |  |
  
 
-### DockerFile 
+### **DockerFile** 
 如果BuildConfig.spec.source.type的类型是Dockerfile，那么input就只能是inline DockerFile。
 
     source:
       type: "Dockerfile"
       dockerfile: "FROM centos:7\nRUN yum install -y httpd"
-### Image Source
+### **Image Source**
 主要是把构建过程中需要的额外的文件打包到image中，在引用的时候可以通过引用image的方式，从而来获取（拷贝）build过程所有需要的文件。引用image的方式可以是直接应用docker image，也可以引用image stream。注意拷贝image中文件时，一定要定义好两个路径信息，一个destinationDir，另一个是sourcePath。
 destinationDir必须是相对路径，相对于构建进程的路径。而sourcePath必须是绝对路径，也就是保存构建文件image内的绝对路径。举个例子：
 
@@ -82,7 +82,7 @@ destinationDir必须是相对路径，相对于构建进程的路径。而source
     
 
 > 需要注意的是，在用户定制构建中（custom build）不支持这一特性，也就是不支持把构建文件存放的另一个image中。
-### **Git Source**
+### **Git 仓库地址**
 Prerequisite：BuildConfig.spec.source.type = Git
 如果build 源类型是git，那么必须提供一个git代码仓库路径。而inline Dockerfile可选的。如果配置的dockerfile一项，那么在ContextDir包含的dockerfile（如果存在）将会被替换。也就是buildconfig配置优先。
 
@@ -100,7 +100,7 @@ Prerequisite：BuildConfig.spec.source.type = Git
 > 如果build config中不指定ref信息，那么openshift 默认clone
 > 主分支的HEAD代码，就是clone深度为1（--depth=1），这个深度不是目录深度，而是版本管理深度。为1表示只clone最后一个版本，其他版本信息不保存。就是没有了版本控制。
 
-#### proxy
+#### *proxy*
 
     source:
       type: Git
@@ -109,24 +109,24 @@ Prerequisite：BuildConfig.spec.source.type = Git
         httpProxy: http://proxy.example.com
         httpsProxy: https://proxy.example.com
         noProxy: somedomain.com, otherdomain.com
-#### [Source Clone Secrets](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
+#### [*Source Clone Secrets*](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
 
 > 与secret相关的内容，在Binary Source会有基本介绍，后续会输出一个单独文档进行讲解
 
-### **Binary Source**
+### **二进制文件**
 
 > BuildConfig.spec.source.type = Binary binary类型的source比较特别，因为它只能通过使用oc start-build命令来进行使用。这种方式的源是不能够通过进行触发同时也不能通过web console的方式进行构建。 使用的参数：
---from-file：
---from-dir and --from-repo：
---from-archive：
-> 如果BuildConfig中配置了Binary source，而在oc
-> start-build命令同时也制定了binary，那么buildconfig中的Binary会被替代。
-> 如果BuildConfig配置了Git source，而在oc
-> start-build命令同时也指定了binary，客户端的binary会被处理。注意：Git source 与Binary source
-> 互斥。
+
+- --from-file：
+- --from-dir 与 --from-repo：
+- --from-archive：
+
+> 如果BuildConfig中配置了Binary source，而在oc start-build命令同时也制定了binary，那么buildconfig中的 Binary会被替代。
+> 如果BuildConfig配置了Git source，而在oc start-build命令同时也指定了binary，客户端的binary会被处理。
+> 注意：Git source 与Binary source互斥。
 参数比较多，下面主要通过来进行理解：
 
-### **Input Secrets**
+### **构建使用的Secrets**
 使用的场景主要是需要用户的认证信息，但是由于安全原因又不想暴露该信息。这时我们就需要输出secret，当然首先应该创建。Secret的详细解释可以参考[k8s](https://kubernetes.io/docs/user-guide/secrets/)，[openshift](https://docs.openshift.org/latest/dev_guide/secrets.html)也给出很详细的解释。
 这里举两个例子简单说明一下
 
@@ -180,7 +180,7 @@ secret在image中的保存位置，通常就在工作目录下，也就是代码
 
 [DockerStragety？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-docker-strategy)
 [Custom Strategy ？？？？](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#using-secrets-custom-strategy)
-### **Using External Artifacts**
+### **使用外部依赖包**
 主要是在构建过程中，需要依赖额外的报，比如jar文件。对于不同的构建策略来说，具体的使用方式是不同的。
 对于sti stragety，我们需要再assemble脚本中，加入下载依赖的包的shell命令，比如：wget  *.jar -o app_dep.jar，在运行应用的时候可能也需要更改run脚本，来运行该依赖。
 对于docker stragety，我们需要修改dockerfile，同时加入RUN命令来下载相关的依赖，比如：RUN wget *.jar -O app_dep.jar
@@ -191,8 +191,8 @@ secret在image中的保存位置，通常就在工作目录下，也就是代码
 - Setting in BuildConfig（all）
 - Providing explicitly using oc start-build --env (仅手动构建有效)
 
-### **Using Docker Credential for Private Registries**
-主要就是secret的理解，对于secret后面单独介绍
+### **访问私有仓库需要的证书信息**
+主要就是secret的理解，对于secret后面单独介绍**strong text**
 主要了解，如果创建secret，如果把secret赋予个service account。
 如openshift中：
 $ oc secrets new dockerhub ~/.docker/config.json
