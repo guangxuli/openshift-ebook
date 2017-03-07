@@ -98,7 +98,7 @@ Prerequisite：BuildConfig.spec.source.type = Git
         noProxy: somedomain.com, otherdomain.com
 ###### [Source Clone Secrets](https://docs.openshift.org/latest/dev_guide/builds/build_inputs.html#source-code)
 
-> 与secret相关的内容，后续会输出一个单独文档进行讲解
+> 与secret相关的内容，在Binary Source会有基本介绍，后续会输出一个单独文档进行讲解
 
 #### **Binary Source**
 
