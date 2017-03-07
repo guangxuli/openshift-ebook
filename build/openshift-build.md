@@ -15,13 +15,6 @@
 - 查看构建细节
 - 查看构建日志
 
-## Build的构建策略
-
-- sti
-- docker
-- custom
-- pipeline
-
 ## Build运行的规则
 
 - 串行
@@ -219,11 +212,18 @@ PULL:
           name: "dockerhub"
       type: "Source"
 
-## [sti requirements](https://docs.openshift.org/latest/creating_images/s2i.html)
+## Build的构建策略
+
+- sti
+- docker
+- custom
+- pipeline
+
+### STI 
 
 主要的作用还是生成Docker Image
 两个基本概念
-### Build Process
+#### Build Process
 构建的三个过程主要有三个元素组成，分别为
 
  - sources
@@ -234,7 +234,7 @@ PULL:
 ![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
 
 
-###S2I scripts
+####S2I scripts
   开发者可以使用任何语言来编写自己的S2I scripts，只要这个语言在构建容器中能够被有效的执行。S2I支持多种的选项来确认assemble/run/save-artifacts scripts各功能脚本的存放位置。每次构建前s2i都会按照如下的顺序检查下面的配置路径，来确定脚本的存放位置。
 
  1. --scripts-url
@@ -305,7 +305,7 @@ example 4. usage script:
     https://github.com/openshift/source-to-image
     EOF
 
-###使用images的[ONBUILD](https://docs.docker.com/engine/reference/builder/#onbuild)功能
+####使用images的[ONBUILD](https://docs.docker.com/engine/reference/builder/#onbuild)功能
 
 *如果用户的builder image不含有执行S2I所需要的基本条件，即镜像中没有安装/bin/bash 或者 tar工具，那么就不会执行一个container build来对存放build的输入。但是如果builder中包含了ONBUILD指令，那么这个S2I过程就会失败。因为这就意味着执行了比较通用的容器内构件过程，这个过程相比S2I是不安全的，必须要显式的对权限进行限制。*
 因此，如果用户想要顺利的执行S2I的过程，那么必须满足下面的一个条件：
@@ -313,13 +313,13 @@ example 4. usage script:
  1. builder image中安装了/bin/bash 已经tar工具
  2. builder image中不能包含ONBUILD指令
 
-## pipeline 
+### pipeline 
 
 
-## docker file
+### docker file
 
 
-## custom
+### custom
 
 ## [Testing S2I Images](https://docs.openshift.org/latest/creating_images/s2i_testing.html#creating-images-s2i-testing)
 
