@@ -336,6 +336,8 @@ example 4. usage script:
 
 - 在BuildConfig中植入jenkins file
 - 提供一个包含jenkins file的git 库地址
+[pipeline的配置过程参考](oc%20edit%20template%20jenkins-ephemeral%20-n%20openshift)
+[jenkins pipeline功能参考](https://jenkins.io/doc/pipeline/)
 
 
 
