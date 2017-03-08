@@ -443,6 +443,8 @@ sti build
     drwxrwxr-x.  2 default root   22 Mar  7 11:15 views
     
 与远端原始代码目录比较发现，远端的代码已经完全注入到新的镜像中。
+s2i 工具的参数说明：
+
 | 选项参数 | 参数类型 | 功能说明 |
 | --- | --- | --- | 
 | --destination | string | 指明解压打包的源代码以及assemble相关脚本文件的容器内路径 | 
