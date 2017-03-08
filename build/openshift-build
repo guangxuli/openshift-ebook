@@ -31,6 +31,7 @@
  - [build inputs] External artifacts 
 
 不同的策略与构建源对应的关系
+
  | 构建源 | 构建策略 |
  | ----- | ----- |
  | DockerFile | Docker、Custom  |
