@@ -525,30 +525,29 @@ It was installed into ./bundle
 重新构建的信息s2i如何知道？
 
 > [cloud@centos ~]$ docker inspect hello-world-app:1.2
-
-    "OnBuild": null,
-                "Labels": {
-                    "build-date": "20161214",
-                    "io.k8s.description": "Platform for building and running Ruby 2.2 applications",
-                    "io.k8s.display-name": "hello-world-app:1.2",
-                    "io.openshift.builder-base-version": "bfd4736",
-                    "io.openshift.builder-version": "06c0ec324aa6edf151f4ea1e7304199c72011bec",
-                    "io.openshift.expose-services": "8080:http",
-                    "io.openshift.s2i.build.commit.author": "Ben Parees \u003cbparees@users.noreply.github.com\u003e",
-                    "io.openshift.s2i.build.commit.date": "Fri Mar 3 15:29:12 2017 -0500",
-                    "io.openshift.s2i.build.commit.id": "022d87e4160c00274b63cdad7c238b5c6a299265",
-                    "io.openshift.s2i.build.commit.message": "Merge pull request #58 from junaruga/feature/fix-for-ruby24",
-                    "io.openshift.s2i.build.commit.ref": "master",
-                    "io.openshift.s2i.build.image": "centos/ruby-22-centos7",
-                    "io.openshift.s2i.build.source-location": "https://github.com/openshift/ruby-hello-world",
-                    "io.openshift.s2i.scripts-url": "image:///usr/libexec/s2i",
-                    "io.openshift.tags": "builder,ruby,ruby22",
-                    "io.s2i.scripts-url": "image:///usr/libexec/s2i",
-                    "license": "GPLv2",
-                    "name": "CentOS Base Image",
-                    "vendor": "CentOS"
-                }
-
+>
+"OnBuild": null,
+            "Labels": {
+                "build-date": "20161214",
+                "io.k8s.description": "Platform for building and running Ruby 2.2 applications",
+                "io.k8s.display-name": "hello-world-app:1.2",
+                "io.openshift.builder-base-version": "bfd4736",
+                "io.openshift.builder-version": "06c0ec324aa6edf151f4ea1e7304199c72011bec",
+                "io.openshift.expose-services": "8080:http",
+                "io.openshift.s2i.build.commit.author": "Ben Parees \u003cbparees@users.noreply.github.com\u003e",
+                "io.openshift.s2i.build.commit.date": "Fri Mar 3 15:29:12 2017 -0500",
+                "io.openshift.s2i.build.commit.id": "022d87e4160c00274b63cdad7c238b5c6a299265",
+                "io.openshift.s2i.build.commit.message": "Merge pull request #58 from junaruga/feature/fix-for-ruby24",
+                "io.openshift.s2i.build.commit.ref": "master",
+                "***io.openshift.s2i.build.image": "centos/ruby-22-centos7***",
+                "***io.openshift.s2i.build.source-location": "https://github.com/openshift/ruby-hello-world***",
+                "***io.openshift.s2i.scripts-url": "image:///usr/libexec/s2i***",
+                "io.openshift.tags": "builder,ruby,ruby22",
+                "io.s2i.scripts-url": "image:///usr/libexec/s2i",
+                "license": "GPLv2",
+                "name": "CentOS Base Image",
+                "vendor": "CentOS"
+            }
 
 s2i completion
 s2i create
