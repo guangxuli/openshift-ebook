@@ -413,7 +413,36 @@ sti build
 
     [cloud@centos openshift]$ docker images | grep hello
     hello-world-app    1.0      956c161ead31        About a minute ago   456.8 MB
+    
 查看应用镜像内部文件：
+
+    [cloud@centos openshift]$ docker run -it hello-world-app:1.0  /bin/bash
+    bash-4.2$ pwd
+    /opt/app-root/src
+    bash-4.2$ ls -la
+    total 40
+    drwxrwxr-x. 10 default root  274 Mar  7 11:15 .
+    drwxrwxr-x.  4 default root   42 Feb 21 09:57 ..
+    drwxrwxr-x.  2 default root   20 Mar  7 11:15 .bundle
+    -rw-rw-r--.  1 default root   11 Mar  7 11:15 .gitignore
+    drwxrwxr-x.  3 default root   19 Mar  7 11:15 .pki
+    drwxrwxr-x.  3 default root   36 Mar  7 11:15 .s2i
+    -rw-rw-r--.  1 default root  278 Mar  7 11:15 Dockerfile
+    -rw-rw-r--.  1 default root  111 Mar  7 11:15 Gemfile
+    -rw-rw-r--.  1 default root  952 Mar  7 11:15 Gemfile.lock
+    -rw-rw-r--.  1 default root  182 Mar  7 11:15 README.md
+    -rw-rw-r--.  1 default root  222 Mar  7 11:15 Rakefile
+    -rw-rw-r--.  1 default root 1444 Mar  7 11:15 app.rb
+    drwxrwxr-x.  3 default root   18 Mar  7 11:15 bundle
+    drwxrwxr-x.  2 default root   45 Mar  7 11:15 config
+    -rw-rw-r--.  1 default root   92 Mar  7 11:15 config.ru
+    drwxrwxr-x.  3 default root   21 Mar  7 11:15 db
+    -rw-rw-r--.  1 default root   93 Mar  7 11:15 models.rb
+    -rwxrwxr-x.  1 default root   35 Mar  7 11:15 run.sh
+    drwxrwxr-x.  2 default root   28 Mar  7 11:15 test
+    drwxrwxr-x.  2 default root   22 Mar  7 11:15 views
+    
+与远端原始代码目录比较发现，远端的代码已经完全注入到新的镜像中。
 
  -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images
  -n, --application-name string          Specify the display name for the application (default: output image name)
