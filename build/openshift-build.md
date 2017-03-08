@@ -34,7 +34,7 @@
 
  | 构建源 | 构建策略 |
  | ----- | ----- |
- | DockerFile | Docker、Custom  |
+ | DockerFile | Docker、Custom |
  |  |  |
  
 
