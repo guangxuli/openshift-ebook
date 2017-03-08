@@ -215,12 +215,12 @@ PULL:
 
 ## Build的构建策略
 
-- sti
-- docker
-- custom
-- pipeline
+- s2i build
+- docker build
+- custom build
+- pipeline build
 
-### STI build
+### S2I build
 
 首先STI是一个工具，该工具能够还是生成Docker Image
 STI的主要优势：
@@ -236,13 +236,13 @@ STI的主要优势：
 |生态||
 |可再生||
 
-两个基本概念
 #### Build Process
 构建的三个过程主要有三个元素组成，分别为
 
  - sources
  - S2I script
  -  builder image
+ 
 在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。
 同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
 ![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
@@ -443,37 +443,37 @@ sti build
     drwxrwxr-x.  2 default root   22 Mar  7 11:15 views
     
 与远端原始代码目录比较发现，远端的代码已经完全注入到新的镜像中。
-
- -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images
- -n, --application-name string          Specify the display name for the application (default: output image name)
-      --assemble-user string             Specify the user to run assemble with
-      --callback-url string              Specify a URL to invoke via HTTP POST upon build completion
-      --cap-drop stringSlice             Specify a comma-separated list of capabilities to drop when running Docker containers
-      --context-dir string               Specify the sub-directory inside the repository with the application sources
-  -c, --copy                             Use local file system copy instead of git cloning the source url
-      --description string               Specify the description of the application
-  -d, --destination string               Specify a destination location for untar operation
-      --dockercfg-path string            Specify the path to the Docker configuration file (default "/home/cloud/.docker/config.json")
-  -e, --env string                       Specify an single environment variable in NAME=VALUE format
-  -E, --environment-file string          Specify the path to the file with environment
-      --exclude string                   Regular expression for selecting files from the source tree to exclude from the build, where the default excludes the '.git' directory (see https://golang.org/pkg/regexp for syntax, but note that "" will be interpreted as allow all files and exclude no files) (default "(^|/)\.git(/|$)")
-      --force-pull                       DEPRECATED: Always pull the builder image even if it is present locally
-      --ignore-submodules                Ignore all git submodules when cloning application repository
-      --incremental                      Perform an incremental build
-      --incremental-pull-policy string   Specify when to pull the previous image for incremental builds (always, never or if-not-present) (default "if-not-present")
-  -i, --inject string                    Specify a directory to inject into the assemble container
-  -l, --location string                  DEPRECATED: Specify a destination location for untar operation
-  -p, --pull-policy string               Specify when to pull the builder image (always, never or if-not-present) (default "if-not-present")
-  -q, --quiet                            Operate quietly. Suppress all non-error output.
-  -r, --ref string                       Specify a ref to check-out
-      --rm                               Remove the previous image during incremental builds
-      --run                              Run resulting image as part of invocation of this command
-  -a, --runtime-artifact string          Specify a file or directory to be copied from the builder to the runtime image
-      --runtime-image string             Image that will be used as the base for the runtime image
-      --save-temp-dir                    Save the temporary directory used by S2I instead of deleting it
-      --scripts string                   DEPRECATED: Specify a URL for the assemble and run scripts
-  -s, --scripts-url string               Specify a URL for the assemble, assemble-runtime and run scripts
-      --use-config                       Store command line options to .s2ifile
+| 选项参数 | 参数类型 | 功能说明 |
+| --- | --- | --- | 
+| --destination | string | 指明解压打包的源代码以及assemble相关脚本文件的容器内路径 | 
+| -s, --scripts-url | string  | 远端存放assemble脚本的url信息 |
+| --copy | string | 使用本地文件系统的源代码 |
+| --context-dir | string | 仓库代码子目录 ？？ |
+|  -E, --environment-file | string   | 制定保存环境变量的文件路径 |
+|  --exclude | 正则表达式 | 不包含在构建(编译)过程中的文件信息，默认的表达式类型 "(^|/)\.git(/|$)",如果设置成"",表示所有的文件都参与构建过程 |
+| --description | string | 应用的描述 |
+| -e, --env | string | 编译环境变量设置 NAME=VALUE|
+| --dockercfg-path | string | 应该是sti使用的dockercfg信息，因为可能要pull builder image？默认是"$HOME/.docker/config.json" |
+| -n, --application-name | string | 指明应用名称 |
+|  --assemble-user | string | 制定执行assemble脚本的用户 | 
+| --cap-drop | stringSlice  | ？？？？ |
+| --ignore-submodules | 不需赋值 |Ignore all git submodules when cloning application repository？？？|
+| --incremental | 不需赋值 | 执行增量编译？？？|
+| --incremental-pull-policy | string | 表示什么时候pull 之前支持增量编译的镜像，(always, never or if-not-present) (default "if-not-present") |
+| -i, --inject | string | Specify a directory to inject into the assemble container ？？？|
+| -p, --pull-policy | string | pull编译镜像的规则，(always, never or if-not-present) |
+| -q, --quiet | 不需赋值 | 不显示非错误性的输出 Suppress all non-error output |
+|-r, --ref | string | 分支或者tag |
+|   --callback-url | string | build完成后，调用HTTP POST方法执行该url |
+|  --rm | 不需赋值 | 在增量编译中，删除之前使用的镜像  |
+| --run | 不需赋值 | 运行构建的镜像 Run resulting image as part of invocation of this command ？？？|
+|  -a, --runtime-artifact | string  | 在双编程框架中，指定定拷贝编译容器中的哪些文件或者目录到运行时镜像中？？|
+| --runtime-image |string | 指定运行时使用的image |
+| --save-temp-dir  | 不需要赋值 | 保存s2i过程中的使用的临时目录信息 |
+| -s, --scripts-url | string | 指定保存assemble, assemble-runtime and run scripts 远端url信息|
+ -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images       
+  
+ --use-config                       Store command line options to .s2ifile
   -v, --volume string                    Specify a volume to mount into the assemble container
 
 Global Flags:
