@@ -471,18 +471,8 @@ sti build
 | --runtime-image |string | 指定运行时使用的image |
 | --save-temp-dir  | 不需要赋值 | 保存s2i过程中的使用的临时目录信息 |
 | -s, --scripts-url | string | 指定保存assemble, assemble-runtime and run scripts 远端url信息|
- -u, --allowed-uids user.RangeList      Specify a range of allowed user ids for the builder and runtime images       
-  
- --use-config                       Store command line options to .s2ifile
-  -v, --volume string                    Specify a volume to mount into the assemble container
-
-Global Flags:
-      --ca string        Set the path of the docker TLS ca file (default "/home/cloud/.docker/ca.pem")
-      --cert string      Set the path of the docker TLS certificate file (default "/home/cloud/.docker/cert.pem")
-      --key string       Set the path of the docker TLS key file (default "/home/cloud/.docker/key.pem")
-      --loglevel int32   Set the level of log output (0-5)
-      --tls              Use TLS to connect to docker; implied by --tlsverify
-      --tlsverify        Use TLS to connect to docker and verify the remote
-  -U, --url string       Set the url of the docker socket to use (default "unix:///var/run/docker.sock")
+| --use-config | 不需要赋值 | Store command line options to .s2ifile？？？？ |
+| -v, --volume | string | Specify a volume to mount into the assemble container?? |
+| -u, --allowed-uids  | user.RangeList | Specify a range of allowed user ids for the builder and runtime images |   
 
 ### oc 客户端
