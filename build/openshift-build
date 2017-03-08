@@ -443,7 +443,9 @@ sti build
     drwxrwxr-x.  2 default root   22 Mar  7 11:15 views
     
 与远端原始代码目录比较发现，远端的代码已经完全注入到新的镜像中。
-s2i 工具的参数说明：
+s2i 工具的命令参数说明：
+
+**s2i build 命令**
 
 | 选项参数 | 参数类型 | 功能说明 |
 | --- | --- | --- | 
@@ -476,5 +478,79 @@ s2i 工具的参数说明：
 | --use-config | 不需要赋值 | Store command line options to .s2ifile？？？？ |
 | -v, --volume | string | Specify a volume to mount into the assemble container?? |
 | -u, --allowed-uids  | user.RangeList | Specify a range of allowed user ids for the builder and runtime images |   
+
+**s2i rebuild** 
+
+>  s2i rebuild < image > [< new-tag >] [flags]
+>  
+>[cloud@centos ~]$ s2i rebuild -p never  hello-world-app:1.2
+>
+Checking if image "hello-world-app:1.2" is available locally ...
+Checking if image "centos/ruby-22-centos7" is available locally ...
+Checking if image "centos/ruby-22-centos7" is available locally ...
+Already on 'master'
+---> Installing application source ...
+---> Building your Ruby application from source ...
+---> Running 'bundle install --deployment --without development:test' ...
+Fetching gem metadata from https://rubygems.org/..........
+Installing rake 10.3.2
+Installing i18n 0.6.11
+Installing json 1.8.6
+Installing minitest 5.4.2
+Installing thread_safe 0.3.4
+Installing tzinfo 1.2.2
+Installing activesupport 4.1.7
+Installing builder 3.2.2
+Installing activemodel 4.1.7
+Installing arel 5.0.1.20140414130214
+Installing activerecord 4.1.7
+Installing mysql2 0.3.16
+Installing rack 1.5.2
+Installing rack-protection 1.5.3
+Installing tilt 1.4.1
+Installing sinatra 1.4.5
+Installing sinatra-activerecord 2.0.3
+Using bundler 1.7.8
+Your bundle is complete!
+Gems in the groups development and test were not installed.
+It was installed into ./bundle
+---> Cleaning up unused ruby gems ...
+
+支持的选项包括： --callback-url、--destination、--dockercfg-path、--incremental、--incremental-pull-policy、--pull-policy、--quiet、--rm、--save-temp-dir。这些选项的功能参考s2i build命令
+
+实践：
+
+> [cloud@centos ~]$  s2i rebuild -p never  hello-world-app:1.2
+
+重新构建的信息s2i如何知道？
+
+> [cloud@centos ~]$ docker inspect hello-world-app:1.2
+
+    "OnBuild": null,
+                "Labels": {
+                    "build-date": "20161214",
+                    "io.k8s.description": "Platform for building and running Ruby 2.2 applications",
+                    "io.k8s.display-name": "hello-world-app:1.2",
+                    "io.openshift.builder-base-version": "bfd4736",
+                    "io.openshift.builder-version": "06c0ec324aa6edf151f4ea1e7304199c72011bec",
+                    "io.openshift.expose-services": "8080:http",
+                    "io.openshift.s2i.build.commit.author": "Ben Parees \u003cbparees@users.noreply.github.com\u003e",
+                    "io.openshift.s2i.build.commit.date": "Fri Mar 3 15:29:12 2017 -0500",
+                    "io.openshift.s2i.build.commit.id": "022d87e4160c00274b63cdad7c238b5c6a299265",
+                    "io.openshift.s2i.build.commit.message": "Merge pull request #58 from junaruga/feature/fix-for-ruby24",
+                    "io.openshift.s2i.build.commit.ref": "master",
+                    "io.openshift.s2i.build.image": "centos/ruby-22-centos7",
+                    "io.openshift.s2i.build.source-location": "https://github.com/openshift/ruby-hello-world",
+                    "io.openshift.s2i.scripts-url": "image:///usr/libexec/s2i",
+                    "io.openshift.tags": "builder,ruby,ruby22",
+                    "io.s2i.scripts-url": "image:///usr/libexec/s2i",
+                    "license": "GPLv2",
+                    "name": "CentOS Base Image",
+                    "vendor": "CentOS"
+                }
+
+
+s2i completion
+s2i create
 
 ### oc 客户端
