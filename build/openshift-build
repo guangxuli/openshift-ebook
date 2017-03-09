@@ -236,6 +236,10 @@
       * oc start-build < buildconfig_name > --build-loglevel=5 //highest
 
 ## Build运行的规则
+构建策略的设置只能在BC中进行配置，build是不能配置的。因为build本身表示某一次具体的构建，是否串行还是并行只能有上层的BC来进行控制。
+
+> 代码：https://github.com/openshift/nodejs-ex.git
+> 编译镜像：docker.io/openshift/nodejs-010-centos7:latest
 
 - 串行
 - 串行最新
