@@ -431,35 +431,23 @@ PULL:
 ## Build的构建策略
 
 - s2i build
-- docker build
-- custom build
-- pipeline build
+- *docker build*
+- *custom build*
+- *pipeline build*
 
 ### S2I build
 
-首先STI是一个工具，该工具能够还是生成Docker Image
-STI的主要优势：
-
-| 优势 | 描述 |
-| --- | --- | 
-|镜像灵活性||
-|加速制作镜像| 1.与docker build的方式相比，不需要每个step都创建一层，2.支持增量编译|
-|打补丁||
-|操作效率||
-|操作安全||
-|用户效率||
-|生态||
-|可再生||
+首先STI是一个工具，该工具根据开发者（用户的输入）生成Image
 
 #### Build Process
-构建的三个过程主要有三个元素组成，分别为
+- 三要素
 
- - sources
- - S2I script
- -  builder image
+ * sources
+ * S2I script
+ * builder image
  
-在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。
-同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
+- 主要流程
+在构建的过程中，S2I负责要把sources与S2I scripts注入到编译镜像中，为了实现这一目标，S2I通过对sources 以及S2I scripts进行打包，然后把tar文件注入到构建镜像中。在构建镜像中对该tar文件具体解压的位置由***--destination***参数或者构建镜像的***io.openshift.s2i.destination*** label指定。如果没有指定，那么默认使用/tmp目录。同时构建的过程还需要安装tar工具以及/bin/bash，如果builder image中没有tar与/bin/bash那么sti 就会强拉一个安装该基本环境的docker image。下面是sti 构建的流图：
 ![sti flow](https://github.com/openshift/source-to-image/blob/master/docs/sti-flow.png)
 
 
@@ -779,9 +767,101 @@ example 4. usage script:
                 noun_aliases=()
             }
 
+### oc 客户端build过程
+#### 使用本地代码库编译
+> [cloud@centos ruby-hello-world]$  oc new-build . --docker-image=centos/ruby-22-centos7:latest
 
-**s2i create命令**
+    --> Found Docker image bce81d0 (2 weeks old) from Docker Hub for "centos/ruby-22-centos7:latest"
 
-### oc 客户端
+    Ruby 2.2 
+    -------- 
+    Platform for building and running Ruby 2.2 applications
+
+    Tags: builder, ruby, ruby22
+
+    * An image stream will be created as "ruby-22-centos7:latest" that will track the source image
+    * The source repository appears to match: ruby
+    * A source build using source code from https://github.com/openshift/ruby-hello-world.git#master will be created
+      * The resulting image will be pushed to image stream "ruby-hello-world:latest"
+      * Every time "ruby-22-centos7:latest" changes a new build will be triggered
+
+    --> Creating resources with label build=ruby-hello-world ...
+        imagestream "ruby-22-centos7" created
+        imagestream "ruby-hello-world" created
+        buildconfig "ruby-hello-world" created
+    --> Success
+        Build configuration "ruby-hello-world" created and build triggered.
+        Run 'oc logs -f bc/ruby-hello-world' to stream the build progress
+
+
+> [cloud@centos ruby-hello-world]$ oc get all
+
+    NAME                  TYPE      FROM         LATEST
+    bc/ruby-hello-world   Source    Git@master   1
+    
+    NAME                        TYPE      FROM          STATUS     STARTED              DURATION
+    builds/ruby-hello-world-1   Source    Git@022d87e   Complete   About a minute ago   6s
+    
+    NAME                  DOCKER REPO                                  TAGS      UPDATED
+    is/ruby-22-centos7    172.30.1.1:5000/myproject/ruby-22-centos7    latest    About a minute ago
+    is/ruby-hello-world   172.30.1.1:5000/myproject/ruby-hello-world   latest    41 seconds ago
+    
+    NAME                          READY     STATUS      RESTARTS   AGE
+    po/ruby-hello-world-1-build   0/1       Completed   0          1m
+
+> [cloud@centos ruby-hello-world]$ docker images
+
+    REPOSITORY                                      TAG                 IMAGE ID            CREATED              SIZE
+    172.30.1.1:5000/myproject/ruby-hello-world      latest              11bf0cfee2e6        About a minute ago   456.8 MB
+
+#### 使用远端代码库编译
+
+> oc new-build
+> openshift/nodejs-010-centos7~https://github.com/openshift/nodejs-ex.git
+
+    [cloud@centos ruby-hello-world]$ oc new-build openshift/nodejs-010-centos7~https://github.com/openshift/nodejs-ex.git
+    --> Found Docker image b3b1ce7 (3 months old) from Docker Hub for "openshift/nodejs-010-centos7"
+    
+        Node.js 0.10 
+        ------------ 
+        Platform for building and running Node.js 0.10 applications
+    
+        Tags: builder, nodejs, nodejs010
+    
+        * An image stream will be created as "nodejs-010-centos7:latest" that will track the source image
+        * A source build using source code from https://github.com/openshift/nodejs-ex.git will be created
+          * The resulting image will be pushed to image stream "nodejs-ex:latest"
+          * Every time "nodejs-010-centos7:latest" changes a new build will be triggered
+    
+    --> Creating resources with label build=nodejs-ex ...
+        imagestream "nodejs-010-centos7" created
+        imagestream "nodejs-ex" created
+        buildconfig "nodejs-ex" created
+    --> Success
+        Build configuration "nodejs-ex" created and build triggered.
+        Run 'oc logs -f bc/nodejs-ex' to stream the build progress.
+
+> [cloud@centos ruby-hello-world]$ oc get all
+
+    NAME                  TYPE      FROM         LATEST
+    bc/ruby-hello-world   Source    Git@master   1
+    
+    NAME                        TYPE      FROM          STATUS     STARTED         DURATION
+    builds/ruby-hello-world-1   Source    Git@022d87e   Complete   7 minutes ago   6s
+    
+    NAME                  DOCKER REPO                                  TAGS      UPDATED
+    is/ruby-22-centos7    172.30.1.1:5000/myproject/ruby-22-centos7    latest    7 minutes ago
+    is/ruby-hello-world   172.30.1.1:5000/myproject/ruby-hello-world   latest    7 minutes ago
+    
+    NAME                          READY     STATUS      RESTARTS   AGE
+    po/ruby-hello-world-1-build   0/1       Completed   0          7m
+
+#### 其他构建
+
+> oc new-build https://github.com/openshift/ruby-hello-world#beta2
+> oc new-build -D $'FROM centos:7\nRUN yum install -y httpd'
+> oc new-build https://github.com/openshift/ruby-hello-world
+> --build-secret npmrc:.npmrc
+
 
 
