@@ -544,21 +544,12 @@ example 4. usage script:
  
 ### Docker Build
 *下一篇*
-需要一个仓库地址（url）并带有一份dockerfile文件。dockerfile应该包含了所有生成可运行docker image的构件
 
 ### Custom Build
 *下一篇*
-用户定制自己的builder image
 
 ### Pipeline Build
 *下一篇*
-主要完成更先进的工作流，主要完成CI/CD的过程，配置过程有两种方式：
-
-- 在BuildConfig中植入jenkins file
-- 提供一个包含jenkins file的git 库地址
-[pipeline的配置过程参考](oc%20edit%20template%20jenkins-ephemeral%20-n%20openshift)
-[jenkins pipeline功能参考](https://jenkins.io/doc/pipeline/)
-
 
 ## sti 工具
 
@@ -668,7 +659,7 @@ example 4. usage script:
     drwxrwxr-x.  2 default root   22 Mar  7 11:15 views
     
 与远端原始代码目录比较发现，远端的代码已经完全注入到新的镜像中。
-s2i 工具的命令参数说明：
+
 **s2i rebuild** 
 
 >  s2i rebuild < image > [< new-tag >] [flags]
