@@ -3,17 +3,237 @@
 [TOC]
 
 ## Build基本介绍
+ ---
+### Openshift与Kubernets资源比较
+先通过命令来从系统资源对象的角度openshift与kunetes的基本区别
 
-- 什么是Build
-- 什么是BuildConfig
+    [cloud@centos ~]$ oc get all
+    
+    NAME            TYPE      FROM         LATEST
+    bc/cakephp-ex   Source    Git@master   1
+    bc/nodejs-ex    Source    Git@master   13
+    
+    NAME                  TYPE      FROM         STATUS                          STARTED   DURATION
+    builds/cakephp-ex-1   Source    Git@master   Failed (ExceededRetryTimeout)             
+    
+    NAME                    DOCKER REPO                                    TAGS      UPDATED
+    is/cakephp-ex           172.30.1.1:5000/myproject/cakephp-ex                     
+    is/nodejs-010-centos7   172.30.1.1:5000/myproject/nodejs-010-centos7   latest    5 days ago
+    is/nodejs-ex            172.30.1.1:5000/myproject/nodejs-ex            latest    5 days ago
+    is/parksmap             172.30.1.1:5000/myproject/parksmap             1.0.0     7 days ago
+    
+    NAME            REVISION   DESIRED   CURRENT   TRIGGERED BY
+    dc/cakephp-ex   0          1         0         config,image(cakephp-ex:latest)
+    dc/nodejs-ex    4          1         0         config,image(nodejs-ex:latest)
+    dc/parksmap     1          1         1         config,image(parksmap:1.0.0)
+    
+    NAME             DESIRED   CURRENT   READY     AGE
+    rc/nodejs-ex-1   1         1         1         5d
+    rc/nodejs-ex-2   0         0         0         5d
+    rc/nodejs-ex-3   0         0         0         5d
+    rc/nodejs-ex-4   0         0         0         5d
+    rc/parksmap-1    1         1         1         7d
+    
+    NAME             CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+    svc/cakephp-ex   172.30.21.153   <none>        8080/TCP   18h
+    svc/nodejs-ex    172.30.226.43   <none>        8080/TCP   5d
+    svc/parksmap     172.30.87.225   <none>        8080/TCP   7d
+    
+    NAME                   READY     STATUS    RESTARTS   AGE
+    po/nodejs-ex-1-h4f3f   1/1       Running   0          5d
+    po/parksmap-1-k1n0g    1/1       Running   0          6h
 
+使用kubectl查询：
+
+    [cloud@centos ~]$ kubectl get all
+    NAME                   READY     STATUS    RESTARTS   AGE
+    po/nodejs-ex-1-h4f3f   1/1       Running   0          5d
+    po/parksmap-1-k1n0g    1/1       Running   0          6h
+    
+    NAME             DESIRED   CURRENT   READY     AGE
+    rc/nodejs-ex-1   1         1         1         5d
+    rc/nodejs-ex-2   0         0         0         5d
+    rc/nodejs-ex-3   0         0         0         5d
+    rc/nodejs-ex-4   0         0         0         5d
+    rc/parksmap-1    1         1         1         7d
+    
+    NAME             CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+    svc/cakephp-ex   172.30.21.153   <none>        8080/TCP   18h
+    svc/nodejs-ex    172.30.226.43   <none>        8080/TCP   5d
+    svc/parksmap     172.30.87.225   <none>        8080/TCP   7d
+
+我们发现openshift相比kubenetes增加一些资源对象类型：BC（BuildConfig）、build、is(imagestream)、DC（DeploymentConfig，所以OpenShift从PaaS平台以及DevOps角度上讲，增加了与开发者紧密相关的构建过程，可以理解为CI过程，kubernetes则主要覆盖CD过程。
+
+---
+
+### 什么是Build？
+每一个build对用户来讲都是表示着一次完整构建，当然build对象本身描述的是该构建过程所有相关的配置信息。
+
+下面举例说明：
+
+    [cloud@centos ~]$ oc export  builds/cakephp-ex-1 -o json
+    {
+     (1) "kind": "Build",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "cakephp-ex-1",
+            "creationTimestamp": null,
+            "labels": {
+                "app": "cakephp-ex",
+                "buildconfig": "cakephp-ex",
+                "openshift.io/build-config.name": "cakephp-ex",
+                "openshift.io/build.start-policy": "Serial"
+            },
+            "annotations": {
+                "openshift.io/build-config.name": "cakephp-ex",
+                "openshift.io/build.number": "1"
+            }
+        },
+        "spec": {
+            "serviceAccount": "builder",
+     (2)    "source": {
+                "type": "Git",
+                "git": {
+                    "uri": "https://github.com/openshift/cakephp-ex.git",
+                    "ref": "master"
+                }
+            },
+     (3)    "strategy": {
+                "type": "Source",
+                "sourceStrategy": {
+                    "from": {
+                        "kind": "DockerImage",
+                        "name": "centos/php-70-centos7@sha256:6eab2de3501f637a20eba52c12c49dff72c4bb162ce40043c245cc6add287782"
+                    }
+                }
+            },
+     (4)   "output": {
+                "to": {
+                    "kind": "ImageStreamTag",
+                    "name": "cakephp-ex:latest"
+                },
+                "pushSecret": {
+                    "name": "builder-dockercfg-sbqww"
+                }
+            },
+     (5)    "resources": {},
+     (6)    "postCommit": {},
+     (7)    "nodeSelector": null,
+     (8)    "triggeredBy": [
+                {
+                    "message": "Build configuration change"
+                }
+            ]
+        },
+     (9)  "status": {
+            "phase": "New",
+            "reason": "ExceededRetryTimeout",
+            "message": "Failed to create build pod: pods \"cakephp-ex-1-build\" is forbidden: failed quota: quota1: must specify cpu,memory.",
+            "outputDockerImageReference": "172.30.1.1:5000/myproject/cakephp-ex:latest",
+            "config": {
+                "name": "cakephp-ex"
+            },
+            "output": {}
+        }
+    }
+
+### 什么是BuildConfig？
+
+    [cloud@centos ~]$ oc export  bc/cakephp-ex -o json
+    {
+     (1) "kind": "BuildConfig",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "cakephp-ex",
+            "creationTimestamp": null,
+            "labels": {
+                "app": "cakephp-ex"
+            },
+            "annotations": {
+                "openshift.io/generated-by": "OpenShiftNewApp"
+            }
+        },
+        "spec": {
+      (2)    "triggers": [
+                {
+                    "type": "GitHub",
+                    "github": {
+                        "secret": "XqZqQrmN2_ml5UqepQyf"
+                    }
+                },
+                {
+                    "type": "Generic",
+                    "generic": {
+                        "secret": "xAeGxPx9MzNwZsw_6LeY"
+                    }
+                },
+                {
+                    "type": "ConfigChange"
+                },
+                {
+                    "type": "ImageChange",
+                    "imageChange": {}
+                }
+            ],
+      (3)    "runPolicy": "Serial",
+      (4)    "source": {
+                "type": "Git",
+                "git": {
+                    "uri": "https://github.com/openshift/cakephp-ex.git",
+                    "ref": "master"
+                }
+            },
+      (5)     "strategy": {
+                "type": "Source",
+                "sourceStrategy": {
+                    "from": {
+                        "kind": "ImageStreamTag",
+                        "namespace": "openshift",
+                        "name": "php:7.0"
+                    }
+                }
+            },
+      (6)    "output": {
+                "to": {
+                    "kind": "ImageStreamTag",
+                    "name": "cakephp-ex:latest"
+                }
+            },
+      (7)    "resources": {},
+      (8)    "postCommit": {},
+      (9)    "nodeSelector": null
+        },
+        "status": {
+            "lastVersion": 0
+        }
+    }
+
+
+---
 ## Build的基本操作
 
 - 运行一个Build
+	* oc start-build < buildconfig_name >
+	* oc start-build --from-build=< build_name >
+	* oc start-build < buildconfig_name > --follow
+	* oc start-build < buildconfig_name > --env=< key >=< value >
 - 取消一个Build
+    * oc cancel-build < build_name >
+    * oc cancel-build < build1_name > < build2_name > < build3_name >
+    * oc cancel-build bc/< buildconfig_name >
+    * oc cancel-build bc/< buildconfig_name >  --state=< state >
 - 删除一个BuildConfig
+    * oc delete bc < BuildConfigName >
+    * oc delete --cascade=false bc < BuildConfigName >
+   
 - 查看构建细节
+    * oc describe build < build_name >
 - 查看构建日志
+    * oc logs -f build/< build_name >
+    * oc logs -f bc/< buildconfig_name >  // log latest
+    * oc logs --version=< number > bc/< buildconfig_name >
+    * 设置日志的打印级别
+      * oc start-build < buildconfig_name > --build-loglevel=5 //highest
 
 ## Build运行的规则
 
@@ -33,9 +253,8 @@
 不同的策略与构建源对应的关系
 
  | 构建源 | 构建策略 |
- | ----- | ----- |
+ | ---- | ---- |
  | DockerFile | Docker、Custom |
- |  |  |
  
 
 ### **DockerFile** 
@@ -603,3 +822,5 @@ s2i 工具的命令参数说明：
 **s2i create命令**
 
 ### oc 客户端
+
+
