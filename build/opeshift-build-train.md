@@ -547,6 +547,11 @@ example 4. usage script:
 
 | 选项参数 | 参数类型 | 功能说明 |
 | --- | --- | --- | 
+|-u, --allowed-uids |user.RangeList|配置具备构建镜像与运行时镜像的用户列表，即镜像中的用户必须在和这个配置列表范围内，参考例1:|
+|-n, --application-name|string|配置app的名字，参考例2|
+| --assemble-user|string|运行assemble脚本的用户，参考例3|
+| --callback-url|string|build结束后调用的url，参考例4|
+|--cap-drop|stringSlice|？？？？？？例5|
 | --destination | string | 指明解压打包的源代码以及assemble相关脚本文件的容器内路径 | 
 | -s, --scripts-url | string  | 远端存放assemble脚本的url信息 |
 | --copy | string | 使用本地文件系统的源代码 |
@@ -568,6 +573,233 @@ example 4. usage script:
 | --runtime-image |string | 指定运行时使用的image |
 | --save-temp-dir  | 不需要赋值 | 保存s2i过程中的使用的临时目录信息 |
 | -s, --scripts-url | string | 指定保存assemble, assemble-runtime and run scripts 远端url信息|
+
+
+例1：
+
+测试镜像：
+[cloud@centos openshift]$ docker inspect  docker.io/openshift/ruby-20-centos7
+
+> "ContainerConfig": {
+>             "Hostname": "d6dcf178f680",
+>             "Domainname": "",
+>             **"User": "1001",** [OCI Image Configuration User](https://github.com/opencontainers/image-spec/blob/master/config.md)
+>             "AttachStdin": false,
+>             "AttachStdout": false,
+>             "AttachStderr": false,
+>             "ExposedPorts": {
+>                 "8080/tcp": {}
+>             },
+>             "Tty": false,
+>             "OpenStdin": false,
+>             "StdinOnce": false,
+>             "Env": [
+>                 "PATH=/opt/app-root/src/bin:/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+>                 "STI_SCRIPTS_URL=image:///usr/libexec/s2i",
+>                 "STI_SCRIPTS_PATH=/usr/libexec/s2i",
+>                 "HOME=/opt/app-root/src",
+>                 "BASH_ENV=/opt/app-root/etc/scl_enable",
+>                 "ENV=/opt/app-root/etc/scl_enable",
+>                 "PROMPT_COMMAND=. /opt/app-root/etc/scl_enable",
+>                 "RUBY_VERSION=2.0"
+>             ],
+
+设置用户列表不包含1001的用户：
+[cloud@centos openshift]$ s2i build ./ruby-hello-world/ docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1005  lgx-test1 --loglevel=5
+执行结果：用户校验没有通过，无法进行构建
+
+> E0424 16:39:27.943546   26042 errors.go:266] An error occurred: image
+> "docker.io/openshift/ruby-20-centos7" must specify a user that is
+> numeric and within the range of allowed users E0424 16:39:27.943562  
+> 26042 errors.go:267] Suggested solution: modify image
+> "docker.io/openshift/ruby-20-centos7" to use a numeric user within the
+> allowed range or build without the --allowed-uids flag
+
+
+例2：
+
+> [cloud@centos openshift]$ s2i build ./ruby-hello-world/
+> docker.io/openshift/ruby-20-centos7  lgx-test1 --loglevel=5
+> -n=lgx-app2
+> 
+> [cloud@centos openshift]$ docker inspect lgx-test1
+
+
+查看基础构建出的镜像lgx-test1:
+    
+    "OnBuild": null,
+                "Labels": {
+                    "build-date": "20161102",
+                    "io.k8s.description": "Platform for building and running Ruby 2.0 applications",
+                    "io.k8s.display-name": "lgx-app2", //here
+                    "io.openshift.builder-base-version": "a8deee2",
+                    "io.openshift.builder-version": "70976f9c15d6109405ec85994284d345df29a301",
+                    "io.openshift.expose-services": "8080:http",
+                    "io.openshift.s2i.build.commit.author": "Ben Parees \u003cbparees@users.noreply.github.com\u003e",
+                    "io.openshift.s2i.build.commit.date": "Fri Mar 3 15:29:12 2017 -0500",
+                    "io.openshift.s2i.build.commit.id": "022d87e4160c00274b63cdad7c238b5c6a299265",
+                    "io.openshift.s2i.build.commit.message": "Merge pull request #58 from junaruga/feature/fix-for-ruby24",
+                    "io.openshift.s2i.build.commit.ref": "master",
+                    "io.openshift.s2i.build.image": "docker.io/openshift/ruby-20-centos7",
+                    "io.openshift.s2i.build.source-location": "file:///home/cloud/go/src/github.com/openshift/ruby-hello-world",
+                    "io.openshift.s2i.scripts-url": "image:///usr/libexec/s2i",
+                    "io.openshift.tags": "builder,ruby,ruby20",
+
+例3
+
+- 异常测试 1002 不是image配置的user，但却在制定的user组内
+
+> [cloud@centos openshift]$ s2i build ./ruby-hello-world/
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001
+> --assemble-user=1002  lgx-image-name --loglevel=5
+错误日志：
+
+    I0425 11:01:11.788950   30433 sti.go:679] Installing sinatra-activerecord (2.0.3)
+    I0425 11:01:11.789228   30433 sti.go:679] Using bundler (1.3.5)
+    I0425 11:01:11.790788   30433 sti.go:679] Your bundle is complete!
+    I0425 11:01:11.790809   30433 sti.go:679] It was installed into ./bundle
+    I0425 11:01:11.818004   30433 sti.go:679] ---> Cleaning up unused ruby gems ...
+    I0425 11:01:12.627804   30433 sti.go:683] chgrp: changing group of './': Operation not permitted
+    I0425 11:01:12.629697   30433 sti.go:683] chgrp: changing group of './.pki': Operation not permitted
+    I0425 11:01:12.632066   30433 sti.go:683] chgrp: changing group of './.pki/nssdb': Operation not permitted
+    I0425 11:01:15.958964   30433 sti.go:683] chmod: changing permissions of './': Operation not permitted
+    I0425 11:01:15.960090   30433 sti.go:683] chmod: changing permissions of './.pki': Operation not permitted
+    I0425 11:01:15.961346   30433 sti.go:683] chmod: changing permissions of './.pki/nssdb': Operation not permitted
+    I0425 11:01:18.237520   30433 sti.go:683] chmod: changing permissions of './': Operation not permitted
+    I0425 11:01:18.237581   30433 sti.go:683] chmod: changing permissions of './.pki': Operation not permitted
+    I0425 11:01:18.237614   30433 sti.go:683] chmod: changing permissions of './.pki/nssdb': Operation not permitted
+    I0425 11:01:18.350724   30433 docker.go:1040] Waiting for container "16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d" to stop ...
+    I0425 11:01:18.425987   30433 docker.go:975] Killing container "16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d" ...
+    I0425 11:01:18.428034   30433 docker.go:977] warning: Failed to kill container "16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d": Error response from daemon: {"message":"Cannot kill container 16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d: Container 16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d is not running"}
+    I0425 11:01:18.428081   30433 docker.go:982] Removing container "16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d" ...
+    I0425 11:01:18.546857   30433 docker.go:986] Removed container "16e69101cb0b975abcc72ceaab8e450ecf2d9323140fe56763af195fcc26e60d"
+    I0425 11:01:18.547772   30433 cleanup.go:33] Removing temporary directory /tmp/s2i386978141
+    I0425 11:01:18.547801   30433 fs.go:236] Removing directory '/tmp/s2i386978141'
+    I0425 11:01:18.554109   30433 main.go:159] Build failed
+    E0425 11:01:18.554147   30433 errors.go:276] An error occurred: non-zero (13) exit code from docker.io/openshift/ruby-20-centos7
+
+异常测试：1001在image默认对的配置用户，却不在制定的用户组内。
+
+> [cloud@centos openshift]$ s2i build ./ruby-hello-world/
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004
+> --assemble-user=1001  lgx-image-name --loglevel=5
+
+    I0425 11:18:08.477111    8387 docker.go:508] Using locally available image "docker.io/openshift/ruby-20-centos7:latest"
+    imageUserSpec : "1001" imageUser : "1001"
+    E0425 11:18:08.482147    8387 errors.go:266] An error occurred: image "docker.io/openshift/ruby-20-centos7" must specify a user that is numeric and within the range of allowed users
+
+
+- 正确配置测试：1001属于镜像配置的用户，同时又在允许的用户组内。
+
+> [cloud@centos openshift]$ s2i build ./ruby-hello-world/
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001
+> --assemble-user=1001  lgx-image-name --loglevel=5
+
+例4：
+
+> [cloud@centos openshift]$ s2i build ./ruby-hello-world/
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001
+> --assemble-user=1001  lgx-image-name --loglevel=5 --callback-url=https://github.com/guangxuli/origin
+结果：
+
+    I0425 11:28:22.164428    8741 main.go:162] Build completed successfully
+    I0425 11:28:22.164481    8741 main.go:166] Callback returned with error code: 403
+
+例5：--cap-drop stringSlice
+
+例6：--context-dir
+
+- 正常测试
+
+> [cloud@centos openshift]$ s2i build
+> https://github.com/guangxuli/test.git 
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001
+> --assemble-user=1001  lgx-image-name --loglevel=5 --context-dir=ruby/ruby-hello-world
+配置结果输出：
+
+    Builder Name:			Ruby 2.0
+    Builder Image:			docker.io/openshift/ruby-20-centos7
+    Builder Image Version:		70976f9c15d6109405ec85994284d345df29a301
+    Builder Base Version:		a8deee2
+    Source:				https://github.com/guangxuli/test.git
+    Context Directory:		ruby/ruby-hello-world
+    Output Image Tag:		lgx-image-name
+    Environment:			
+    Labels:				
+    Incremental Build:		disabled
+    Remove Old Build:		disabled
+    Builder Pull Policy:		if-not-present
+    Previous Image Pull Policy:	if-not-present
+    Quiet:				disabled
+    Layered Build:			disabled
+    Docker Endpoint:		unix:///var/run/docker.sock
+    Docker Pull Config:		/home/cloud/.docker/config.json
+    Docker Pull User:		haibianxiaodongbei
+
+- 异常测试
+
+    [cloud@centos openshift]$ s2i build https://github.com/guangxuli/test.git  docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001 --assemble-user=1001  lgx-image-name --loglevel=5 --context-dir=ruby/ruby-hello-world
+
+输出结果：
+
+    I0425 13:54:20.396059   26001 main.go:148] 
+    Builder Name:			Ruby 2.0
+    Builder Image:			docker.io/openshift/ruby-20-centos7
+    Builder Image Version:		70976f9c15d6109405ec85994284d345df29a301
+    Builder Base Version:		a8deee2
+    Source:				https://github.com/guangxuli/test.git
+    Context Directory:		ruby/ruby-hello-world-not-exist
+    Output Image Tag:		lgx-image-name
+    Environment:			
+    Labels:				
+    Incremental Build:		disabled
+    Remove Old Build:		disabled
+    Builder Pull Policy:		if-not-present
+    Previous Image Pull Policy:	if-not-present
+    Quiet:				disabled
+    Layered Build:			disabled
+    Docker Endpoint:		unix:///var/run/docker.sock
+    Docker Pull Config:		/home/cloud/.docker/config.json
+    Docker Pull User:		haibianxiaodongbei
+    
+    I0425 13:54:20.503374   26001 docker.go:508] Using locally available image "docker.io/openshift/ruby-20-centos7:latest"
+    imageUserSpec : "1001" imageUser : "1001"
+    I0425 13:54:20.511840   26001 docker.go:508] Using locally available image "docker.io/openshift/ruby-20-centos7:latest"
+    I0425 13:54:20.511888   26001 docker.go:739] Image sha256:2ddf8a8e2bfeb37361f913098372d3b5a914c92b9419220ad4d1fd378b8acc17 contains io.openshift.s2i.scripts-url set to "image:///usr/libexec/s2i"
+    I0425 13:54:20.511933   26001 scm.go:21] DownloadForSource https://github.com/guangxuli/test.git
+    I0425 13:54:20.511962   26001 scm.go:28] return from ParseFile file exists false proto specified false use copy false
+    I0425 13:54:20.512140   26001 sti.go:206] Preparing to build lgx-image-name
+    I0425 13:54:20.514362   26001 clone.go:56] Downloading "https://github.com/guangxuli/test.git" ("ruby/ruby-hello-world-not-exist") ...
+    I0425 13:54:20.514380   26001 clone.go:62] Cloning sources into "/tmp/s2i847333401/upload/tmp"
+    I0425 13:54:22.719974   26001 clone.go:78] Checked out "HEAD"
+    I0425 13:54:22.802148   26001 clone.go:84] Updated submodules for "HEAD"
+    I0425 13:54:22.829135   26001 fs.go:236] Removing directory '/tmp/s2i847333401/upload/src'
+    I0425 13:54:22.829320   26001 cleanup.go:33] Removing temporary directory /tmp/s2i847333401
+    I0425 13:54:22.829335   26001 fs.go:236] Removing directory '/tmp/s2i847333401'
+    I0425 13:54:22.839728   26001 main.go:159] Build failed
+    E0425 13:54:22.839786   26001 errors.go:276] An error occurred: stat /tmp/s2i847333401/upload/tmp/ruby/ruby-hello-world-not-exist: no such file or directory
+
+例7：
+
+例8：
+
+例9：
+
+例10：
+
+例11：
+
+例12：
+
+例13：
+
+例14：
+
+例15：
+
+
+
+
 
 查看编译镜像：
 
@@ -862,6 +1094,7 @@ example 4. usage script:
 > oc new-build -D $'FROM centos:7\nRUN yum install -y httpd'
 > oc new-build https://github.com/openshift/ruby-hello-world
 > --build-secret npmrc:.npmrc
+
 
 
 
