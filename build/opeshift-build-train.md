@@ -552,10 +552,11 @@ example 4. usage script:
 | --assemble-user|string|运行assemble脚本的用户，参考例3|
 | --callback-url|string|build结束后调用的url，参考例4|
 |--cap-drop|stringSlice|？？？？？？例5|
+| --context-dir | string | 仓库代码子目录，即app的目录为某个代码仓库的子目录 例6|
+|-c, --copy||？？？？？？？例7|
 | --destination | string | 指明解压打包的源代码以及assemble相关脚本文件的容器内路径 | 
 | -s, --scripts-url | string  | 远端存放assemble脚本的url信息 |
 | --copy | string | 使用本地文件系统的源代码 |
-| --context-dir | string | 仓库代码子目录 |
 |  -E, --environment-file | string   | 制定保存环境变量的文件路径 |
 |  --exclude | 正则表达式 | 不包含在构建(编译)过程中的文件信息，默认的表达式类型 "(^|/)\.git(/|$)",如果设置成"",表示所有的文件都参与构建过程 |
 | --description | string | 应用的描述 |
@@ -782,6 +783,33 @@ example 4. usage script:
 例7：
 
 例8：
+
+> [cloud@centos openshift]$ s2i build 
+> https://github.com/guangxuli/test.git 
+> docker.io/openshift/ruby-20-centos7 -u=1002,1003,1004,1001
+> --assemble-user=1001  lgx-image-name --loglevel=5 --context-dir=ruby/ruby-hello-world  --description="this is application description added by lgx"
+
+            "OnBuild": null,
+            "Labels": {
+                "build-date": "20161102",
+                "io.k8s.description": "this is application description added by lgx",
+                "io.k8s.display-name": "lgx-image-name",
+                "io.openshift.builder-base-version": "a8deee2",
+                "io.openshift.builder-version": "70976f9c15d6109405ec85994284d345df29a301",
+                "io.openshift.expose-services": "8080:http",
+                "io.openshift.s2i.build.commit.author": "guangxuli \u003cli.guangxu@zte.com.cn\u003e",
+                "io.openshift.s2i.build.commit.date": "Tue Apr 25 13:45:25 2017 +0800",
+                "io.openshift.s2i.build.commit.id": "81e5a90c43b0e495f550ec0e893a85e94bf0322f",
+                "io.openshift.s2i.build.commit.message": "use subcontext dir repo",
+                "io.openshift.s2i.build.commit.ref": "master",
+                "io.openshift.s2i.build.image": "docker.io/openshift/ruby-20-centos7",
+                "io.openshift.s2i.build.source-context-dir": "ruby/ruby-hello-world",
+                "io.openshift.s2i.build.source-location": "https://github.com/guangxuli/test.git",
+                "io.openshift.s2i.scripts-url": "image:///usr/libexec/s2i",
+                "io.openshift.tags": "builder,ruby,ruby20",
+                "io.s2i.scripts-url": "image:///usr/libexec/s2i",
+                "license": "GPLv2",
+
 
 例9：
 
